@@ -55,14 +55,24 @@ addRoute('GET', '/products/(\d+)', function ($id) {
 
 
     $newID = str_split($id, 10);
-
+    $data = [];
     $product = Product::Find($newID[1]);
     header("Location: /products/" . $newID[1]);
     header('HTTP/1.1 200 OK');
     header('Content-Type: application/vnd.api+json');
     if ($product) {
 
-        $data[] = ['type' => 'products', 'id' => $product->getId(), 'attributes' => ['nome' => $product->getNome(), 'marca' => $product->getMarca(), 'prezzo' => $product->getPrezzo()]];
+        $data[] =
+            [
+                'type' => 'products',
+                'id' => $product->getId(),
+                'attributes' =>
+                    [
+                        'nome' => $product->getNome(),
+                        'marca' => $product->getMarca(),
+                        'prezzo' => $product->getPrezzo()
+                    ]
+            ];
         $response = ['data' => $data];
 
 
@@ -78,15 +88,17 @@ addRoute('GET', '/products', function () {
     $products = Product::FetchAll();
     $data = [];
     foreach ($products as $product) {
-        $data[] = [
-            'type' => 'products',
-            'id' => $product->getId(),
-            'attributes' => [
-                'nome' => $product->getNome(),
-                'marca' => $product->getMarca(),
-                'prezzo' => $product->getPrezzo()
-            ]
-        ];
+        $data[] =
+            [
+                'type' => 'products',
+                'id' => $product->getId(),
+                'attributes' =>
+                    [
+                        'nome' => $product->getNome(),
+                        'marca' => $product->getMarca(),
+                        'prezzo' => $product->getPrezzo()
+                    ]
+            ];
     }
     header("Location: /products");
     header('HTTP/1.1 200 OK');
@@ -96,57 +108,46 @@ addRoute('GET', '/products', function () {
 
     echo json_encode($response, JSON_PRETTY_PRINT);
 });
-
 addRoute('POST', '/products', function () {
 
     $postData = json_decode(file_get_contents('php://input'), true);
+    header("Location: /products");
+    header('HTTP/1.1 201 CREATED');
+    header('Content-Type: application/vnd.api+json');
+    $data=[];
+    try {
+        $newProduct = Product::Create($postData["data"]);
+        $data =
+            [
+                'type' => 'products',
+                'id' => $newProduct->getId(),
+                'attributes' =>
+                    [
+                        'nome' => $newProduct->getNome(),
+                        'marca' => $newProduct->getMarca(),
+                        'prezzo' => $newProduct->getPrezzo()
+                    ]
+            ];
 
-    // Verifica se sono presenti dati e se gli attributi sono correttamente strutturati
-    if ($postData && isset($postData['data']['attributes'])) {
-        $productData = $postData['data']['attributes'];
+        $response = ['data' => $data];
+        echo json_encode($response, JSON_PRETTY_PRINT);
 
-        // Estrai gli attributi e controlla se sono presenti
-        $nome = isset($productData['nome']) ? $productData['nome'] : null;
-        $marca = isset($productData['marca']) ? $productData['marca'] : null;
-        $prezzo = isset($productData['prezzo']) ? $productData['prezzo'] : null;
-
-        // Verifica che i valori essenziali siano presenti per creare un nuovo prodotto
-        if ($nome !== null && $marca !== null && $prezzo !== null) {
-            try {
-                // Crea il nuovo prodotto nel database
-                $newProduct = Product::Create(['nome' => $nome, 'marca' => $marca, 'prezzo' => $prezzo]);
-                $data[] = ['type' => 'products', 'id' => $newProduct->getId(), 'attributes' => ['nome' => $newProduct->getNome(), 'marca' => $newProduct->getMarca(), 'prezzo' => $newProduct->getPrezzo()]];
-                $response = ['data' => $data];
-                // Restituisci la risposta con stato 201 Created
-                header('HTTP/1.1 201 CREATED');
-                header('Content-Type: application/vnd.api+json');
-                echo json_encode($response, JSON_PRETTY_PRINT);
-
-            } catch (PDOException $e) {
-                // Gestisci gli errori del database
-                header('HTTP/1.1 500 INTERNAL SERVER ERROR');
-                header('Content-Type: application/vnd.api+json');
-                http_response_code(500);
-                echo json_encode(['error' => 'Errore nella creazione del prodotto']);
-            }
-        } else {
-            // Se i dati essenziali sono mancanti, restituisci un errore
-            http_response_code(400);
-            echo json_encode(['error' => 'Dati JSON incompleti']);
-        }
-    } else {
-        // Se i dati JSON non sono validi o mancanti, restituisci un errore
-        http_response_code(400);
-        echo json_encode(['error' => 'Dati JSON non validi o mancanti']);
+    } catch (PDOException $e) {
+        header("Location: /products");
+        header('HTTP/1.1 500 INTERNAL SERVER ERROR');
+        header('Content-Type: application/vnd.api+json');
+        http_response_code(500);
+        echo json_encode(['error' => 'Errore nella creazione del prodotto']);
     }
 });
+
 
 addRoute('PATCH', '/products/(\d+)', function ($id) {
 
     $putData = json_decode(file_get_contents('php://input'), true);
     $newID = str_split($id, 10);
     $product = Product::Find($newID[1]);
-
+    $data = [];
 
     try {
 
@@ -155,7 +156,17 @@ addRoute('PATCH', '/products/(\d+)', function ($id) {
             if ($product)
             {
                 $updatedProduct = $product->Update($putData["data"]);
-                $data[] = ['type' => 'products', 'id' => $updatedProduct->getId(), 'attributes' => ['nome' => $updatedProduct->getNome(), 'marca' => $updatedProduct->getMarca(), 'prezzo' => $updatedProduct->getPrezzo()]];
+                $data[] =
+                    [
+                        'type' => 'products',
+                        'id' => $updatedProduct->getId(),
+                        'attributes' =>
+                            [
+                                'nome' => $updatedProduct->getNome(),
+                                'marca' => $updatedProduct->getMarca(),
+                                'prezzo' => $updatedProduct->getPrezzo()
+                            ]
+                    ];
                 $response = ['data' => $data];
 
                 header("Location: /products/".$newID[1]);
