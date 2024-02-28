@@ -99,9 +99,6 @@ class Product
 
     public function Delete()
     {
-        if (!$this->getId()) {
-            return false;
-        }
         $id = $this->getId();
         $pdo = self::Connect();
         $stmt = $pdo->prepare("DELETE FROM nicolo_bertoncello_ecommerce.products WHERE id = :id");
