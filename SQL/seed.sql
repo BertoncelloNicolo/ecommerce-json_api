@@ -1,4 +1,4 @@
-insert into ecommerce.products(nome, prezzo, marca)
+insert into nicolo_bertoncello_ecommerce.products(nome, prezzo, marca)
 values ("libro", 20, "zanichelli"),
        ("rose", 19.99, "lego"),
        ("personal computer", 1799.99, "omen"),

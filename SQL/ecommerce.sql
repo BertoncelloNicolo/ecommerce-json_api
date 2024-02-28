@@ -1,6 +1,6 @@
-create database if not exists ecommerce;
+create database if not exists nicolo_bertoncello_ecommerce;
 
-create table if not exists ecommerce.products
+create table if not exists nicolo_bertoncello_ecommerce.products
 (
     id int not null auto_increment primary key,
     nome varchar(50),
