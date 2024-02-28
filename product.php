@@ -5,7 +5,7 @@ class Product
 {
     private $id;
     private $nome;
-    private $prezzo;
+    private int $prezzo;
     private $marca;
 
     public static function Find($id)
