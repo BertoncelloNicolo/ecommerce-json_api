@@ -1,6 +1,5 @@
 <?php
 require "Dbmanager.php";
-
 class Product
 {
     private $id;
@@ -8,45 +7,10 @@ class Product
     private int $prezzo;
     private $marca;
 
-    public static function Find($id)
-    {
-        $pdo = self::Connect();
-        $stmt = $pdo->prepare("SELECT * FROM nicolo_bertoncello_ecommerce.products WHERE id = :id");
-        $stmt->bindParam(":id", $id);
-        if ($stmt->execute()) {
-            return $stmt->fetchObject("product");
-        } else {
-            return false;
-        }
-    }
 
-    public static function Connect()
+    public function getId()
     {
-        return DbManager::Connect("nicolo_bertoncello_ecommerce");
-    }
-
-    public static function Create($params)
-    {
-        $pdo = self::Connect();
-        $stmt = $pdo->prepare("INSERT INTO nicolo_bertoncello_ecommerce.products (nome,marca,prezzo) VALUES (:nome,:marca,:prezzo)");
-        $stmt->bindParam(":nome", $params["nome"]);
-        $stmt->bindParam(":marca", $params["marca"]);
-        $stmt->bindParam(":prezzo", $params["prezzo"]);
-        if ($stmt->execute()) {
-            $stmt = $pdo->prepare("SELECT * FROM nicolo_bertoncello_ecommerce.products ORDER BY id DESC LIMIT 1");
-            $stmt->execute();
-            return $stmt->fetchObject("product");
-        } else {
-            throw new PDOException("Errore Nella Creazione");
-        }
-    }
-
-    public static function FetchAll()
-    {
-        $pdo = self::Connect();
-        $stmt = $pdo->query("SELECT * FROM nicolo_bertoncello_ecommerce.products");
-        return $stmt->fetchAll(PDO::FETCH_CLASS, 'product');
-
+        return $this->id;
     }
 
     public function getNome()
@@ -79,38 +43,96 @@ class Product
         $this->marca = $marca;
     }
 
-    public function Update($params)
+    public function getProductId()
+    {
+        return $this->product_id;
+    }
+
+    public function setProductId($product_id)
+    {
+        $this->product_id = $product_id;
+    }
+
+    public function getCartId()
+    {
+        return $this->cart_id;
+    }
+
+    public function setCartId($cart_id)
+    {
+        $this->cart_id = $cart_id;
+    }
+
+    public static function Find($id)
     {
         $pdo = self::Connect();
-        $stmt = $pdo->prepare("UPDATE nicolo_bertoncello_ecommerce.products SET nome = :nome, marca = :marca, prezzo = :prezzo WHERE id = :id");
-        $stmt->bindParam(":id", $this->id);
-        $stmt->bindParam("nome", $params["nome"]);
-        $stmt->bindParam("marca", $params["marca"]);
-        $stmt->bindParam("prezzo", $params["prezzo"]);
+        $stmt = $pdo->prepare("select * from nicolo_bertoncello_ecommerce.products where id = :id");
+        $stmt->bindParam(":id", $id);
         if ($stmt->execute()) {
-            $stmt = $pdo->prepare("SELECT * FROM nicolo_bertoncello_ecommerce.products WHERE id = :id");
-            $stmt->bindParam(":id", $this->id);
-            $stmt->execute();
-            return $stmt->fetchObject("product");
+            return $stmt->fetchObject("Product");
         } else {
-            return false;
+            throw new PDOException("Prodotto non trovato");
         }
     }
 
-    public function Delete()
+    public static function Create($params)
     {
-        $id = $this->getId();
         $pdo = self::Connect();
-        $stmt = $pdo->prepare("DELETE FROM nicolo_bertoncello_ecommerce.products WHERE id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        return true;
+        $stmt = $pdo->prepare("insert into nicolo_bertoncello_ecommerce.products (nome,prezzo,marca) values (:nome,:prezzo,:marca)");
+        $stmt->bindParam(":nome", $params["nome"]);
+        $stmt->bindParam(":prezzo", $params["prezzo"]);
+        $stmt->bindParam(":marca", $params["marca"]);
+        if ($stmt->execute()) {
+            $stmt = $pdo->prepare("select * from nicolo_bertoncello_ecommerce.products order by id desc limit 1");
+            $stmt->execute();
+            return $stmt->fetchObject("Product");
+        } else {
+            throw new PDOException("Errore Nella Creazione");
+        }
     }
 
-    public function getId()
+    public static function FetchAll()
     {
-        return $this->id;
+        $pdo = self::Connect();
+        $stmt = $pdo->query("select * from nicolo_bertoncello_ecommerce.products");
+        return $stmt->fetchAll(PDO::FETCH_CLASS, 'Product');
+
     }
 
+    public function Update($params) {
+        $pdo = self::Connect();
+        $stmt = $pdo->prepare("UPDATE nicolo_bertoncello_ecommerce.products SET nome = :nome, prezzo = :prezzo WHERE id = :id");
+        $stmt->bindParam(":nome", $params["nome"]);
+        $stmt->bindParam(":prezzo", $params["prezzo"]);
+        $stmt->bindParam(":id", $params["id"]);
+        if ($stmt->execute()) {
+            return true;
+        } else {
+            throw new PDOException("Errore nell'aggiornamento del prodotto");
+        }
+    }
 
+    public function Delete() {
+        $pdo = self::Connect();
+        $cart_id = $this->getCartId();
+        $product_id = $this->getProductId();
+        $stmt = $pdo->prepare("DELETE FROM nicolo_bertoncello_ecommerce.cart_products WHERE product_id = :product_id AND cart_id = :cart_id");
+        $stmt->bindParam(":product_id", $product_id, PDO::PARAM_INT);
+        $stmt->bindParam(":cart_id", $cart_id, PDO::PARAM_INT);
+
+        try {
+            if ($stmt->execute()) {
+                return true;
+            } else {
+                throw new PDOException("Errore nell'eliminazione del prodotto");
+            }
+        } catch (PDOException $e) {
+            throw new PDOException("Errore nell'eliminazione del prodotto: " . $e->getMessage());
+        }
+    }
+
+    public static function Connect()
+    {
+        return DbManager::Connect("nicolo_bertoncello_ecommerce");
+    }
 }
